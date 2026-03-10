@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type VpnStatus = 'disconnected' | 'connecting' | 'connected';
+export type VpnStatus = 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'error';
 export type UserPlan = 'free' | 'premium';
 
 export interface Server {
@@ -16,10 +16,10 @@ interface VpnState {
   // VPN
   status: VpnStatus;
   selectedServer: Server | null;
-  
+
   // Пользователь
   plan: UserPlan;
-  
+
   // Действия
   setStatus: (status: VpnStatus) => void;
   setSelectedServer: (server: Server) => void;

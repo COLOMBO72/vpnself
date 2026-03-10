@@ -1,11 +1,8 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-} from 'react-native';
+import VpnService from '../services/VpnService';
+import { useEffect } from 'react';
+import ServerConfigService from '../services/ServerConfigService';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVpnStore } from '../store/vpnStore';
@@ -20,25 +17,41 @@ export default function HomeScreen() {
   const isConnected = status === 'connected';
   const isConnecting = status === 'connecting';
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (isConnected) {
+      setStatus('disconnecting');
+      await VpnService.disconnect();
       setStatus('disconnected');
     } else {
+      if (!selectedServer) {
+        Alert.alert('Сервер не выбран', 'Пожалуйста выбери сервер для подключения');
+        return;
+      }
       setStatus('connecting');
-      setTimeout(() => setStatus('connected'), 2000);
+      try {
+        const config = ServerConfigService.getConfig(selectedServer);
+        await VpnService.connect(config);
+      } catch (error) {
+        setStatus('disconnected');
+        Alert.alert('Ошибка', 'Не удалось подключиться к VPN');
+      }
     }
   };
 
-  const statusColor = isConnected
-    ? '#00ff88'
-    : isConnecting
-    ? '#ffaa00'
-    : '#ff4466';
+  useEffect(() => {
+    const listener = VpnService.onStatusChange((status) => {
+      setStatus(status);
+    });
+    return () => VpnService.removeStatusListener();
+  }, []);
+  const statusColor = isConnected ? '#00ff88' : isConnecting ? '#ffaa00' : '#ff4466';
 
   const statusText = isConnected
     ? 'Подключено'
     : isConnecting
     ? 'Подключение...'
+    : status === 'disconnecting'
+    ? 'Отключение...'
     : 'Отключено';
 
   return (
@@ -52,18 +65,14 @@ export default function HomeScreen() {
           style={styles.planBadge}
           onPress={() => navigation.navigate('Subscription')}
         >
-          <Text style={styles.planText}>
-            {plan === 'free' ? '🔓 Free' : '💎 Premium'}
-          </Text>
+          <Text style={styles.planText}>{plan === 'free' ? '🔓 Free' : '💎 Premium'}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Статус */}
       <View style={styles.statusContainer}>
         <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-        <Text style={[styles.statusText, { color: statusColor }]}>
-          {statusText}
-        </Text>
+        <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
       </View>
 
       {/* Кнопка подключения */}
@@ -82,14 +91,9 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       {/* Выбранный сервер */}
-      <TouchableOpacity
-        style={styles.serverButton}
-        onPress={() => navigation.navigate('Servers')}
-      >
+      <TouchableOpacity style={styles.serverButton} onPress={() => navigation.navigate('Servers')}>
         <Text style={styles.serverButtonText}>
-          {selectedServer
-            ? `${selectedServer.flag} ${selectedServer.name}`
-            : '🌍 Выбрать сервер'}
+          {selectedServer ? `${selectedServer.flag} ${selectedServer.name}` : '🌍 Выбрать сервер'}
         </Text>
         <Text style={styles.serverArrow}>›</Text>
       </TouchableOpacity>
