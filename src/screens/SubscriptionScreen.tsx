@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   ScrollView,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useVpnStore } from '../store/vpnStore';
+import { subscriptionApi } from '../api/subscription';
 
 const FEATURES_FREE = [
   '✅ 3 бесплатных сервера',
@@ -30,15 +32,25 @@ const FEATURES_PREMIUM = [
 export default function SubscriptionScreen() {
   const navigation = useNavigation();
   const { plan, setPlan } = useVpnStore();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = () => {
-    // Позже здесь будет реальная оплата через In-App purchases
-    setPlan('premium');
-    navigation.goBack();
+  const handleSubscribe = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await subscriptionApi.activate();
+      setPlan('premium');
+      Alert.alert('Успешно', 'Premium активирован!', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (error) {
+      Alert.alert('Ошибка', 'Не удалось оформить подписку');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRestore = () => {
-    // Позже здесь будет восстановление покупки
     Alert.alert('Восстановление', 'Покупки восстановлены');
   };
 
@@ -46,7 +58,6 @@ export default function SubscriptionScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f1a" />
 
-      {/* Заголовок */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>‹ Назад</Text>
@@ -55,7 +66,6 @@ export default function SubscriptionScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      {/* Заголовок страницы */}
       <Text style={styles.headline}>Выбери свой план</Text>
       <Text style={styles.subheadline}>Используй VPN бесплатно или получи максимум с Premium</Text>
 
@@ -101,13 +111,20 @@ export default function SubscriptionScreen() {
             <Text style={styles.currentPlanText}>Текущий план</Text>
           </View>
         ) : (
-          <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
-            <Text style={styles.subscribeButtonText}>Попробовать Premium</Text>
+          <TouchableOpacity
+            style={styles.subscribeButton}
+            onPress={handleSubscribe}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.subscribeButtonText}>Попробовать Premium</Text>
+            )}
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Восстановить покупку */}
       <TouchableOpacity onPress={handleRestore}>
         <Text style={styles.restoreText}>Восстановить покупку</Text>
       </TouchableOpacity>
@@ -120,31 +137,16 @@ export default function SubscriptionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f1a',
-  },
-  content: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
+  container: { flex: 1, backgroundColor: '#0f0f1a' },
+  content: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 32,
   },
-  backButton: {
-    color: '#aaaaff',
-    fontSize: 18,
-    width: 60,
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
+  backButton: { color: '#aaaaff', fontSize: 18, width: 60 },
+  title: { color: '#ffffff', fontSize: 20, fontWeight: 'bold' },
   headline: {
     color: '#ffffff',
     fontSize: 28,
@@ -167,12 +169,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  planCardActive: {
-    borderColor: '#00ff88',
-  },
-  premiumCard: {
-    borderColor: '#3333ff',
-  },
+  planCardActive: { borderColor: '#00ff88' },
+  premiumCard: { borderColor: '#3333ff' },
   popularBadge: {
     backgroundColor: '#3333ff',
     borderRadius: 20,
@@ -181,40 +179,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 12,
   },
-  popularText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  popularText: { color: '#ffffff', fontSize: 12, fontWeight: '600' },
   planHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  planTitle: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  planPrice: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'right',
-  },
-  planPriceAnnual: {
-    color: '#888899',
-    fontSize: 12,
-    textAlign: 'right',
-    marginTop: 2,
-  },
-  featureText: {
-    color: '#ccccdd',
-    fontSize: 14,
-    marginBottom: 8,
-    lineHeight: 20,
-  },
+  planTitle: { color: '#ffffff', fontSize: 22, fontWeight: 'bold' },
+  planPrice: { color: '#ffffff', fontSize: 20, fontWeight: 'bold', textAlign: 'right' },
+  planPriceAnnual: { color: '#888899', fontSize: 12, textAlign: 'right', marginTop: 2 },
+  featureText: { color: '#ccccdd', fontSize: 14, marginBottom: 8, lineHeight: 20 },
   currentPlanBadge: {
     backgroundColor: '#003322',
     borderRadius: 10,
@@ -222,11 +197,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  currentPlanText: {
-    color: '#00ff88',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  currentPlanText: { color: '#00ff88', fontSize: 14, fontWeight: '600' },
   subscribeButton: {
     backgroundColor: '#3333ff',
     borderRadius: 14,
@@ -234,11 +205,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
   },
-  subscribeButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  subscribeButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
   restoreText: {
     color: '#aaaaff',
     fontSize: 14,
@@ -246,10 +213,5 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
-  disclaimer: {
-    color: '#555566',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
+  disclaimer: { color: '#555566', fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });
