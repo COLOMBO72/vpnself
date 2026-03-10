@@ -2,10 +2,19 @@ import React from 'react';
 import VpnService from '../services/VpnService';
 import { useEffect } from 'react';
 import ServerConfigService from '../services/ServerConfigService';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVpnStore } from '../store/vpnStore';
+import BannerAdComponent from '../components/BannerAdComponent';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -55,7 +64,7 @@ export default function HomeScreen() {
     : 'Отключено';
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f1a" />
 
       {/* Заголовок */}
@@ -97,7 +106,14 @@ export default function HomeScreen() {
         </Text>
         <Text style={styles.serverArrow}>›</Text>
       </TouchableOpacity>
-    </View>
+
+      {/* Реклама для Free пользователей */}
+      {plan === 'free' && (
+        <View style={styles.adContainer}>
+          <BannerAdComponent />
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
@@ -105,8 +121,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0f0f1a',
+  },
+  content: {
     paddingHorizontal: 24,
     paddingTop: 60,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
@@ -188,5 +207,9 @@ const styles = StyleSheet.create({
   serverArrow: {
     color: '#aaaaff',
     fontSize: 24,
+  },
+  adContainer: {
+    marginTop: 24,
+    alignItems: 'center',
   },
 });
