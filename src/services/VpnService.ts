@@ -17,11 +17,12 @@ class VpnService {
   }
 
   // Подключиться к VPN
-  async connect(serverConfig: string): Promise<string> {
+  async connect(config: string): Promise<void> {
+    console.log('🔑 VPN Config:', config);
     try {
       const permission = await this.prepare();
       if (permission === 'granted' || permission === 'requested') {
-        return await VpnModule.connect(serverConfig);
+        return await VpnModule.connect(config);
       }
       throw new Error('VPN permission denied');
     } catch (error) {

@@ -38,7 +38,7 @@ export default function HomeScreen() {
       }
       setStatus('connecting');
       try {
-        const config = ServerConfigService.getConfig(selectedServer);
+        const config = await ServerConfigService.getConfig(selectedServer);
         await VpnService.connect(config);
       } catch (error) {
         setStatus('disconnected');

@@ -2,23 +2,22 @@ package com.vpnapp
 
 import android.content.Intent
 import android.net.VpnService
-import android.os.ParcelFileDescriptor
+import android.util.Log
+import com.wireguard.android.backend.GoBackend
+import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
-import com.wireguard.config.Interface
-import com.wireguard.config.Peer
-import com.wireguard.crypto.Key
+import java.io.BufferedReader
 import java.io.StringReader
 
 class WireGuardVpnService : VpnService() {
 
-    private var vpnInterface: ParcelFileDescriptor? = null
-    private var isRunning = false
+    private var backend: GoBackend? = null
+    private var activeTunnel: Tunnel? = null
 
     companion object {
         const val ACTION_START = "com.vpnapp.START_VPN"
         const val ACTION_STOP = "com.vpnapp.STOP_VPN"
         const val EXTRA_CONFIG = "vpn_config"
-
         var isActive = false
     }
 
@@ -26,9 +25,7 @@ class WireGuardVpnService : VpnService() {
         return when (intent?.action) {
             ACTION_START -> {
                 val config = intent.getStringExtra(EXTRA_CONFIG)
-                if (config != null) {
-                    startVpn(config)
-                }
+                if (config != null) startVpn(config)
                 START_STICKY
             }
             ACTION_STOP -> {
@@ -40,39 +37,59 @@ class WireGuardVpnService : VpnService() {
     }
 
     private fun startVpn(configString: String) {
-        try {
-            val builder = Builder()
-                .setSession("SELFVPN")
-                .addAddress("10.0.0.2", 24)
-                .addDnsServer("1.1.1.1")
-                .addDnsServer("8.8.8.8")
-                .addRoute("0.0.0.0", 0)
-                .setMtu(1420)
+        Thread {
+            try {
+                sendStatusBroadcast("connecting")
 
-            vpnInterface = builder.establish()
-            isRunning = true
-            isActive = true
+                if (backend == null) {
+                    backend = GoBackend(this)
+                }
 
-            // Уведомляем React Native
-            sendStatusBroadcast("connected")
+                val config = Config.parse(BufferedReader(StringReader(configString)))
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-            sendStatusBroadcast("error")
-        }
+                val tunnel = object : Tunnel {
+                    override fun getName() = "SELFVPN"
+                    override fun onStateChange(newState: Tunnel.State) {
+                        when (newState) {
+                            Tunnel.State.UP -> {
+                                isActive = true
+                                sendStatusBroadcast("connected")
+                                Log.d("WireGuard", "✅ VPN подключён!")
+                            }
+                            Tunnel.State.DOWN -> {
+                                isActive = false
+                                sendStatusBroadcast("disconnected")
+                                Log.d("WireGuard", "VPN отключён")
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+
+                activeTunnel = tunnel
+                backend!!.setState(tunnel, Tunnel.State.UP, config)
+
+            } catch (e: Exception) {
+                Log.e("WireGuard", "❌ Ошибка: ${e.message}")
+                isActive = false
+                sendStatusBroadcast("error")
+            }
+        }.start()
     }
 
     private fun stopVpn() {
-        try {
-            vpnInterface?.close()
-            vpnInterface = null
-            isRunning = false
-            isActive = false
-            sendStatusBroadcast("disconnected")
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        stopSelf()
+        Thread {
+            try {
+                activeTunnel?.let {
+                    backend?.setState(it, Tunnel.State.DOWN, null)
+                }
+                isActive = false
+                sendStatusBroadcast("disconnected")
+                stopSelf()
+            } catch (e: Exception) {
+                Log.e("WireGuard", "Ошибка остановки: ${e.message}")
+            }
+        }.start()
     }
 
     private fun sendStatusBroadcast(status: String) {
