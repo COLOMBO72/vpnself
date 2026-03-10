@@ -1,32 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
-  ScrollView,
   TouchableOpacity,
+  ScrollView,
   StatusBar,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useVpnStore, Server } from '../store/vpnStore';
-
-const SERVERS: Server[] = [
-  // Free серверы
-  { id: '1', name: 'Германия', country: 'DE', flag: '🇩🇪', ping: 45, isPremium: false },
-  { id: '2', name: 'Нидерланды', country: 'NL', flag: '🇳🇱', ping: 52, isPremium: false },
-  { id: '3', name: 'Финляндия', country: 'FI', flag: '🇫🇮', ping: 38, isPremium: false },
-  // Premium серверы
-  { id: '4', name: 'США — Нью-Йорк', country: 'US', flag: '🇺🇸', ping: 110, isPremium: true },
-  { id: '5', name: 'Япония — Токио', country: 'JP', flag: '🇯🇵', ping: 180, isPremium: true },
-  { id: '6', name: 'Великобритания', country: 'GB', flag: '🇬🇧', ping: 65, isPremium: true },
-  { id: '7', name: 'Канада', country: 'CA', flag: '🇨🇦', ping: 120, isPremium: true },
-  { id: '8', name: 'Сингапур', country: 'SG', flag: '🇸🇬', ping: 200, isPremium: true },
-];
+import { serversApi } from '../api/servers';
 
 export default function ServersScreen() {
   const navigation = useNavigation();
   const { selectedServer, setSelectedServer, plan } = useVpnStore();
+  const [servers, setServers] = useState<Server[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadServers();
+  }, []);
+
+  const loadServers = async () => {
+    try {
+      const data = await serversApi.getServers();
+      setServers(data);
+    } catch (error: any) {
+      Alert.alert('Ошибка', 'Не удалось загрузить серверы');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectServer = (server: Server) => {
     if (server.isPremium && plan === 'free') {
@@ -37,23 +43,24 @@ export default function ServersScreen() {
     navigation.goBack();
   };
 
-  const renderServer = ({ item }: { item: Server }) => {
-    const isSelected = selectedServer?.id === item.id;
-    const isLocked = item.isPremium && plan === 'free';
+  const renderServer = (server: Server) => {
+    const isSelected = selectedServer?.id === server.id;
+    const isLocked = server.isPremium && plan === 'free';
 
     return (
       <TouchableOpacity
+        key={server.id}
         style={[
           styles.serverItem,
           isSelected && styles.serverItemSelected,
           isLocked && styles.serverItemLocked,
         ]}
-        onPress={() => handleSelectServer(item)}
+        onPress={() => handleSelectServer(server)}
       >
-        <Text style={styles.serverFlag}>{item.flag}</Text>
+        <Text style={styles.serverFlag}>{server.flag}</Text>
         <View style={styles.serverInfo}>
-          <Text style={styles.serverName}>{item.name}</Text>
-          <Text style={styles.serverPing}>{item.ping} ms</Text>
+          <Text style={styles.serverName}>{server.name}</Text>
+          <Text style={styles.serverPing}>{server.ping ? `${server.ping} ms` : 'Нет данных'}</Text>
         </View>
         <View style={styles.serverRight}>
           {isLocked ? (
@@ -61,14 +68,14 @@ export default function ServersScreen() {
           ) : isSelected ? (
             <Text style={styles.checkIcon}>✓</Text>
           ) : null}
-          {item.isPremium && <Text style={styles.premiumBadge}>Premium</Text>}
+          {server.isPremium && <Text style={styles.premiumBadge}>Premium</Text>}
         </View>
       </TouchableOpacity>
     );
   };
 
-  const freeServers = SERVERS.filter((s) => !s.isPremium);
-  const premiumServers = SERVERS.filter((s) => s.isPremium);
+  const freeServers = servers.filter((s) => !s.isPremium);
+  const premiumServers = servers.filter((s) => s.isPremium);
 
   return (
     <View style={styles.container}>
@@ -82,13 +89,20 @@ export default function ServersScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.list}>
-        <Text style={styles.sectionTitle}>🔓 Бесплатные</Text>
-        {freeServers.map((server) => renderServer({ item: server }))}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3333ff" />
+          <Text style={styles.loadingText}>Загрузка серверов...</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.list}>
+          <Text style={styles.sectionTitle}>🔓 Бесплатные</Text>
+          {freeServers.map((server) => renderServer(server))}
 
-        <Text style={styles.sectionTitle}>💎 Premium</Text>
-        {premiumServers.map((server) => renderServer({ item: server }))}
-      </ScrollView>
+          <Text style={styles.sectionTitle}>💎 Premium</Text>
+          {premiumServers.map((server) => renderServer(server))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -116,12 +130,21 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    color: '#aaaaff',
+    fontSize: 16,
+  },
   sectionTitle: {
     color: '#aaaaff',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 1,
-    paddingHorizontal: 24,
     marginTop: 16,
     marginBottom: 8,
   },
