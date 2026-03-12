@@ -28,8 +28,9 @@ class VpnModule(private val reactContext: ReactApplicationContext) :
         }
     }
     val filter = IntentFilter("com.vpnapp.VPN_STATUS")
+    // Убираем RECEIVER_NOT_EXPORTED — нужен RECEIVER_EXPORTED
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-        reactContext.registerReceiver(statusReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        reactContext.registerReceiver(statusReceiver, filter, Context.RECEIVER_EXPORTED)
     } else {
         reactContext.registerReceiver(statusReceiver, filter)
     }
