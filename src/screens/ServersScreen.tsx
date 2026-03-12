@@ -35,6 +35,10 @@ export default function ServersScreen() {
   };
 
   const handleSelectServer = (server: Server) => {
+    if (server.comingSoon) {
+      Alert.alert('Скоро', 'Этот сервер будет доступен в ближайшее время!');
+      return;
+    }
     if (server.isPremium && plan === 'free') {
       navigation.navigate('Subscription' as never);
       return;
@@ -46,6 +50,7 @@ export default function ServersScreen() {
   const renderServer = (server: Server) => {
     const isSelected = selectedServer?.id === server.id;
     const isLocked = server.isPremium && plan === 'free';
+    const isComingSoon = server.comingSoon;
 
     return (
       <TouchableOpacity
@@ -53,22 +58,26 @@ export default function ServersScreen() {
         style={[
           styles.serverItem,
           isSelected && styles.serverItemSelected,
-          isLocked && styles.serverItemLocked,
+          (isLocked || isComingSoon) && styles.serverItemLocked,
         ]}
         onPress={() => handleSelectServer(server)}
       >
         <Text style={styles.serverFlag}>{server.flag}</Text>
         <View style={styles.serverInfo}>
           <Text style={styles.serverName}>{server.name}</Text>
-          <Text style={styles.serverPing}>{server.ping ? `${server.ping} ms` : 'Нет данных'}</Text>
+          <Text style={styles.serverPing}>
+            {isComingSoon ? 'Скоро доступно' : server.ping ? `${server.ping} ms` : 'Нет данных'}
+          </Text>
         </View>
         <View style={styles.serverRight}>
-          {isLocked ? (
+          {isComingSoon ? (
+            <Text style={styles.comingSoonBadge}>Скоро</Text>
+          ) : isLocked ? (
             <Text style={styles.lockIcon}>🔒</Text>
           ) : isSelected ? (
             <Text style={styles.checkIcon}>✓</Text>
           ) : null}
-          {server.isPremium && <Text style={styles.premiumBadge}>Premium</Text>}
+          {server.isPremium && !isComingSoon && <Text style={styles.premiumBadge}>Premium</Text>}
         </View>
       </TouchableOpacity>
     );
@@ -167,7 +176,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a2a1a',
   },
   serverItemLocked: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   serverFlag: {
     fontSize: 28,
@@ -202,5 +211,14 @@ const styles = StyleSheet.create({
     color: '#ffaa00',
     fontSize: 11,
     fontWeight: '600',
+  },
+  comingSoonBadge: {
+    color: '#aaaaff',
+    fontSize: 11,
+    fontWeight: '600',
+    backgroundColor: '#2a2a4a',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
 });

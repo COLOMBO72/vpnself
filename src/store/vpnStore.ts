@@ -18,6 +18,7 @@ export interface Server {
   flag: string;
   ping: number;
   isPremium: boolean;
+  comingSoon?: boolean;
 }
 
 interface VpnState {

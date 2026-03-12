@@ -12,6 +12,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useVpnStore } from '../store/vpnStore';
 import { subscriptionApi } from '../api/subscription';
+import { paymentApi } from '../api/payment';
+import { Linking } from 'react-native';
 
 const FEATURES_FREE = [
   '✅ 3 бесплатных сервера',
@@ -34,18 +36,35 @@ export default function SubscriptionScreen() {
   const { plan, setPlan } = useVpnStore();
   const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
     if (loading) return;
     setLoading(true);
     try {
-      await subscriptionApi.activate();
-      setPlan('premium');
-      Alert.alert('Успешно', 'Premium активирован!', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      const { paymentUrl, paymentId } = await paymentApi.createPayment(plan);
+
+      // Открываем страницу оплаты ЮКассы
+      await Linking.openURL(paymentUrl);
+
+      // Проверяем статус каждые 3 секунды
+      const interval = setInterval(async () => {
+        const { status } = await paymentApi.checkStatus(paymentId);
+        if (status === 'succeeded') {
+          clearInterval(interval);
+          setPlan('premium');
+          Alert.alert('✅ Успешно', 'Premium активирован!', [
+            { text: 'OK', onPress: () => navigation.goBack() },
+          ]);
+          setLoading(false);
+        }
+      }, 3000);
+
+      // Останавливаем проверку через 10 минут
+      setTimeout(() => {
+        clearInterval(interval);
+        setLoading(false);
+      }, 600000);
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось оформить подписку');
-    } finally {
+      Alert.alert('Ошибка', 'Не удалось создать платёж');
       setLoading(false);
     }
   };
@@ -111,17 +130,27 @@ export default function SubscriptionScreen() {
             <Text style={styles.currentPlanText}>Текущий план</Text>
           </View>
         ) : (
-          <TouchableOpacity
-            style={styles.subscribeButton}
-            onPress={handleSubscribe}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.subscribeButtonText}>Попробовать Premium</Text>
-            )}
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              style={styles.subscribeButton}
+              onPress={() => handleSubscribe('monthly')}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.subscribeButtonText}>299 ₽/мес</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.subscribeButton, styles.subscribeButtonAnnual]}
+              onPress={() => handleSubscribe('yearly')}
+              disabled={loading}
+            >
+              <Text style={styles.subscribeButtonText}>1990 ₽/год 🔥 Выгодно</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -214,4 +243,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   disclaimer: { color: '#555566', fontSize: 12, textAlign: 'center', lineHeight: 18 },
+
+  // Добавь это:
+  subscribeButtonAnnual: {
+    backgroundColor: '#00aa55',
+    marginTop: 8,
+  },
 });

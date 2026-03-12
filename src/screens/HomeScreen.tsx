@@ -16,6 +16,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVpnStore } from '../store/vpnStore';
 import BannerAdComponent from '../components/BannerAdComponent';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { AdService } from '../services/AdService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -36,6 +37,17 @@ export default function HomeScreen() {
         Alert.alert('Сервер не выбран', 'Пожалуйста выбери сервер для подключения');
         return;
       }
+
+      // Показываем рекламу Free пользователям
+      if (plan === 'free') {
+        if (AdService.isLoaded()) {
+          await AdService.showInterstitial();
+        } else {
+          // Заглушка для эмулятора/когда реклама не загружена
+          console.log('ℹ️ Реклама не загружена — пропускаем');
+        }
+      }
+
       setStatus('connecting');
       try {
         const config = await ServerConfigService.getConfig(selectedServer);
