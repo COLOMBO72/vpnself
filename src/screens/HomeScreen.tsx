@@ -22,7 +22,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { status, setStatus, selectedServer, plan } = useVpnStore();
+  const { status, setStatus, selectedServer, plan, logout } = useVpnStore();
 
   const isConnected = status === 'connected';
   const isConnecting = status === 'connecting';
@@ -58,6 +58,25 @@ export default function HomeScreen() {
       }
     }
   };
+  const handleLogout = () => {
+    Alert.alert('Выход', 'Ты уверен что хочешь выйти?', [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Выйти',
+        style: 'destructive',
+        onPress: async () => {
+          if (isConnected) {
+            await VpnService.disconnect();
+          }
+          logout();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
+        },
+      },
+    ]);
+  };
 
   useEffect(() => {
     const listener = VpnService.onStatusChange((status) => {
@@ -82,12 +101,17 @@ export default function HomeScreen() {
       {/* Заголовок */}
       <View style={styles.header}>
         <Text style={styles.title}>SELFVPN</Text>
-        <TouchableOpacity
-          style={styles.planBadge}
-          onPress={() => navigation.navigate('Subscription')}
-        >
-          <Text style={styles.planText}>{plan === 'free' ? '🔓 Free' : '💎 Premium'}</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.planBadge}
+            onPress={() => navigation.navigate('Subscription')}
+          >
+            <Text style={styles.planText}>{plan === 'free' ? '🔓 Free' : '💎 Premium'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Выйти</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Статус */}
@@ -223,5 +247,23 @@ const styles = StyleSheet.create({
   adContainer: {
     marginTop: 24,
     alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logoutButton: {
+    backgroundColor: '#1e1e32',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ff4466',
+  },
+  logoutText: {
+    color: '#ff4466',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

@@ -37,6 +37,7 @@ interface VpnState {
   setPlan: (plan: UserPlan) => void;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
+  logout: () => void;
 }
 
 export const useVpnStore = create<VpnState>((set) => ({
@@ -51,4 +52,12 @@ export const useVpnStore = create<VpnState>((set) => ({
   setPlan: (plan) => set({ plan }),
   setUser: (user) => set({ user }),
   setToken: (token) => set({ token }),
+  logout: () =>
+    set({
+      user: null,
+      token: null,
+      plan: 'free',
+      status: 'disconnected',
+      selectedServer: null,
+    }),
 }));

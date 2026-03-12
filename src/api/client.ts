@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { useVpnStore } from '../store/vpnStore';
 
-const API_URL = 'http://10.0.2.2:3000/api'; // 10.0.2.2 — это localhost для Android эмулятора
+//const API_URL = 'http://10.0.2.2:3000/api'; // 10.0.2.2 — это localhost для Android эмулятора
+const API_URL = 'http://94.241.174.77:3000/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
