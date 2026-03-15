@@ -66,7 +66,7 @@ export default function ServersScreen() {
         <View style={styles.serverInfo}>
           <Text style={styles.serverName}>{server.name}</Text>
           <Text style={styles.serverPing}>
-            {isComingSoon ? 'Скоро доступно' : server.ping ? `${server.ping} ms` : 'Нет данных'}
+            {isComingSoon ? 'Скоро доступно' : server.ping ? `${server.ping} ms` : '🟢 Онлайн'}
           </Text>
         </View>
         <View style={styles.serverRight}>
@@ -91,11 +91,11 @@ export default function ServersScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#0f0f1a" />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
           <Text style={styles.backButton}>‹ Назад</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Серверы</Text>
-        <View style={{ width: 60 }} />
+        <View style={styles.backButtonContainer} />
       </View>
 
       {loading ? (
@@ -131,8 +131,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     color: '#aaaaff',
-    fontSize: 18,
-    width: 60,
+    fontSize: 16, // было 18
   },
   title: {
     color: '#ffffff',
@@ -220,5 +219,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+  },
+  backButtonContainer: {
+    minWidth: 70,
   },
 });

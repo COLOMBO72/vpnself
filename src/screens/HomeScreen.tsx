@@ -38,7 +38,7 @@ export default function HomeScreen() {
         return;
       }
 
-      // Показываем рекламу Free пользователям
+      // Ad for free user
       if (plan === 'free') {
         if (AdService.isLoaded()) {
           await AdService.showInterstitial();
@@ -167,13 +167,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 32,
   },
   title: {
     color: '#ffffff',
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
-    letterSpacing: 4,
+    letterSpacing: 2,
+    flexShrink: 1,
   },
   planBadge: {
     backgroundColor: '#1e1e32',

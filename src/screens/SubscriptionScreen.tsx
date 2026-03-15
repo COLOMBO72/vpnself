@@ -26,11 +26,11 @@ export default function SubscriptionScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#0f0f1a" />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
           <Text style={styles.backButton}>‹ Назад</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Подписка</Text>
-        <View style={{ width: 60 }} />
+        <View style={styles.backButtonContainer} />
       </View>
 
       {plan === 'premium' ? (
@@ -90,7 +90,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  backButton: { color: '#aaaaff', fontSize: 18, width: 60 },
+  backButton: { color: '#aaaaff', fontSize: 16 },
+  backButtonContainer: { minWidth: 70 },
   title: { color: '#ffffff', fontSize: 20, fontWeight: 'bold' },
   headline: {
     color: '#ffffff',
