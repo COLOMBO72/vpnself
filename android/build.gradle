@@ -19,3 +19,9 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+subprojects {
+    configurations.all {
+        exclude group: "com.android.support", module: "support-compat"
+    }
+}

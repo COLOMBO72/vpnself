@@ -16,7 +16,7 @@ export default function SubscriptionScreen() {
   const { plan, user } = useVpnStore();
 
   const handleOpenTelegram = () => {
-    const botUsername = 'selfvpn_bot'; // замени на username своего бота
+    const botUsername = 'veliumvpn_bot'; // замени на username своего бота
     const url = `https://t.me/${botUsername}?start=${user?.id}`;
     Linking.openURL(url);
   };

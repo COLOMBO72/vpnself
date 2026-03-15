@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type VpnStatus = 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'error';
 export type UserPlan = 'free' | 'premium';
@@ -22,22 +23,20 @@ export interface Server {
 }
 
 interface VpnState {
-  // VPN
   status: VpnStatus;
   selectedServer: Server | null;
-
-  // Пользователь
   user: User | null;
   token: string | null;
   plan: UserPlan;
+  isHydrated: boolean;
 
-  // Действия
   setStatus: (status: VpnStatus) => void;
   setSelectedServer: (server: Server) => void;
   setPlan: (plan: UserPlan) => void;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   logout: () => void;
+  hydrate: () => Promise<void>;
 }
 
 export const useVpnStore = create<VpnState>((set) => ({
@@ -46,18 +45,52 @@ export const useVpnStore = create<VpnState>((set) => ({
   user: null,
   token: null,
   plan: 'free',
+  isHydrated: false,
 
   setStatus: (status) => set({ status }),
   setSelectedServer: (server) => set({ selectedServer: server }),
-  setPlan: (plan) => set({ plan }),
-  setUser: (user) => set({ user }),
-  setToken: (token) => set({ token }),
-  logout: () =>
+  setPlan: async (plan) => {
+    await AsyncStorage.setItem('plan', plan);
+    set({ plan });
+  },
+  setUser: async (user) => {
+    if (user) {
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+    } else {
+      await AsyncStorage.removeItem('user');
+    }
+    set({ user });
+  },
+  setToken: async (token) => {
+    if (token) {
+      await AsyncStorage.setItem('token', token);
+    } else {
+      await AsyncStorage.removeItem('token');
+    }
+    set({ token });
+  },
+  logout: async () => {
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('plan');
+    await AsyncStorage.removeItem('user');
     set({
       user: null,
       token: null,
       plan: 'free',
       status: 'disconnected',
       selectedServer: null,
-    }),
+    });
+  },
+  hydrate: async () => {
+    const token = await AsyncStorage.getItem('token');
+    const plan = (await AsyncStorage.getItem('plan')) as UserPlan | null;
+    const userStr = await AsyncStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    set({
+      token,
+      plan: plan || 'free',
+      user,
+      isHydrated: true,
+    });
+  },
 }));
