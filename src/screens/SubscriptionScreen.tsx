@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,71 +6,19 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  Alert,
-  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useVpnStore } from '../store/vpnStore';
-import { subscriptionApi } from '../api/subscription';
-import { paymentApi } from '../api/payment';
-import { Linking } from 'react-native';
-
-const FEATURES_FREE = [
-  '✅ 3 бесплатных сервера',
-  '✅ Базовая защита',
-  '❌ Реклама',
-  '❌ Низкая скорость (10 Mbps)',
-  '❌ Premium серверы недоступны',
-];
-
-const FEATURES_PREMIUM = [
-  '✅ 8+ серверов по всему миру',
-  '✅ Максимальная защита',
-  '✅ Без рекламы',
-  '✅ Высокая скорость (1 Gbps)',
-  '✅ Приоритетное подключение',
-];
 
 export default function SubscriptionScreen() {
   const navigation = useNavigation();
-  const { plan, setPlan } = useVpnStore();
-  const [loading, setLoading] = useState(false);
+  const { plan, user } = useVpnStore();
 
-  const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      const { paymentUrl, paymentId } = await paymentApi.createPayment(plan);
-
-      // Открываем страницу оплаты ЮКассы
-      await Linking.openURL(paymentUrl);
-
-      // Проверяем статус каждые 3 секунды
-      const interval = setInterval(async () => {
-        const { status } = await paymentApi.checkStatus(paymentId);
-        if (status === 'succeeded') {
-          clearInterval(interval);
-          setPlan('premium');
-          Alert.alert('✅ Успешно', 'Premium активирован!', [
-            { text: 'OK', onPress: () => navigation.goBack() },
-          ]);
-          setLoading(false);
-        }
-      }, 3000);
-
-      // Останавливаем проверку через 10 минут
-      setTimeout(() => {
-        clearInterval(interval);
-        setLoading(false);
-      }, 600000);
-    } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось создать платёж');
-      setLoading(false);
-    }
-  };
-
-  const handleRestore = () => {
-    Alert.alert('Восстановление', 'Покупки восстановлены');
+  const handleOpenTelegram = () => {
+    const botUsername = 'selfvpn_bot'; // замени на username своего бота
+    const url = `https://t.me/${botUsername}?start=${user?.id}`;
+    Linking.openURL(url);
   };
 
   return (
@@ -85,82 +33,50 @@ export default function SubscriptionScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      <Text style={styles.headline}>Выбери свой план</Text>
-      <Text style={styles.subheadline}>Используй VPN бесплатно или получи максимум с Premium</Text>
-
-      {/* Free план */}
-      <View style={[styles.planCard, plan === 'free' && styles.planCardActive]}>
-        <View style={styles.planHeader}>
-          <Text style={styles.planTitle}>🔓 Free</Text>
-          <Text style={styles.planPrice}>0 ₽</Text>
-        </View>
-        {FEATURES_FREE.map((feature, index) => (
-          <Text key={index} style={styles.featureText}>
-            {feature}
+      {plan === 'premium' ? (
+        <View style={styles.premiumActive}>
+          <Text style={styles.premiumActiveIcon}>💎</Text>
+          <Text style={styles.premiumActiveTitle}>У тебя Premium!</Text>
+          <Text style={styles.premiumActiveText}>
+            Наслаждайся максимальной скоростью без рекламы
           </Text>
-        ))}
-        {plan === 'free' && (
-          <View style={styles.currentPlanBadge}>
-            <Text style={styles.currentPlanText}>Текущий план</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Premium план */}
-      <View
-        style={[styles.planCard, styles.premiumCard, plan === 'premium' && styles.planCardActive]}
-      >
-        <View style={styles.popularBadge}>
-          <Text style={styles.popularText}>⭐ Популярный</Text>
         </View>
-        <View style={styles.planHeader}>
-          <Text style={styles.planTitle}>💎 Premium</Text>
-          <View>
-            <Text style={styles.planPrice}>299 ₽/мес</Text>
-            <Text style={styles.planPriceAnnual}>или 1990 ₽/год</Text>
-          </View>
-        </View>
-        {FEATURES_PREMIUM.map((feature, index) => (
-          <Text key={index} style={styles.featureText}>
-            {feature}
-          </Text>
-        ))}
-        {plan === 'premium' ? (
-          <View style={styles.currentPlanBadge}>
-            <Text style={styles.currentPlanText}>Текущий план</Text>
-          </View>
-        ) : (
-          <View>
-            <TouchableOpacity
-              style={styles.subscribeButton}
-              onPress={() => handleSubscribe('monthly')}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.subscribeButtonText}>299 ₽/мес</Text>
-              )}
-            </TouchableOpacity>
+      ) : (
+        <>
+          <Text style={styles.headline}>💎 Узнать о Premium</Text>
 
-            <TouchableOpacity
-              style={[styles.subscribeButton, styles.subscribeButtonAnnual]}
-              onPress={() => handleSubscribe('yearly')}
-              disabled={loading}
-            >
-              <Text style={styles.subscribeButtonText}>1990 ₽/год 🔥 Выгодно</Text>
+          {/* Текущий план */}
+          <View style={styles.planCard}>
+            <Text style={styles.planLabel}>Текущий план</Text>
+            <Text style={styles.planTitle}>🔓 Free</Text>
+            <View style={styles.featureList}>
+              <Text style={styles.featureBad}>❌ Реклама при подключении</Text>
+              <Text style={styles.featureBad}>❌ Скорость до 10 Mbps</Text>
+            </View>
+          </View>
+
+          {/* Стрелка */}
+          <Text style={styles.arrow}>↓</Text>
+
+          {/* Premium план */}
+          <View style={styles.premiumCard}>
+            <View style={styles.popularBadge}>
+              <Text style={styles.popularText}>⭐ Рекомендуем</Text>
+            </View>
+            <Text style={styles.planTitle}>💎 Premium</Text>
+            <View style={styles.featureList}>
+              <Text style={styles.featureGood}>✅ Без рекламы</Text>
+              <Text style={styles.featureGood}>✅ Скорость до 25 Mbps</Text>
+              <Text style={styles.featureGood}>✅ Приоритетное подключение</Text>
+              <Text style={styles.featureGood}>✅ Поддержка 24/7</Text>
+            </View>
+
+            <TouchableOpacity style={styles.upgradeButton} onPress={handleOpenTelegram}>
+              <Text style={styles.upgradeButtonText}>💎 Подробнее</Text>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
-
-      <TouchableOpacity onPress={handleRestore}>
-        <Text style={styles.restoreText}>Восстановить покупку</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.disclaimer}>
-        Подписка автоматически продлевается. Отменить можно в настройках магазина.
-      </Text>
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -181,25 +97,46 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
-  },
-  subheadline: {
-    color: '#888899',
-    fontSize: 15,
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
+    marginBottom: 24,
   },
   planCard: {
     backgroundColor: '#1e1e32',
     borderRadius: 20,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: '#333344',
   },
-  planCardActive: { borderColor: '#00ff88' },
-  premiumCard: { borderColor: '#3333ff' },
+  premiumCard: {
+    backgroundColor: '#1a1a35',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#3333ff',
+    marginBottom: 16,
+  },
+  planLabel: {
+    color: '#888899',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  planTitle: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  featureList: { gap: 8 },
+  featureBad: { color: '#888899', fontSize: 14, lineHeight: 20 },
+  featureGood: { color: '#ccccdd', fontSize: 14, lineHeight: 20 },
+  arrow: {
+    color: '#3333ff',
+    fontSize: 28,
+    textAlign: 'center',
+    marginVertical: 8,
+  },
   popularBadge: {
     backgroundColor: '#3333ff',
     borderRadius: 20,
@@ -209,44 +146,40 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   popularText: { color: '#ffffff', fontSize: 12, fontWeight: '600' },
-  planHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  planTitle: { color: '#ffffff', fontSize: 22, fontWeight: 'bold' },
-  planPrice: { color: '#ffffff', fontSize: 20, fontWeight: 'bold', textAlign: 'right' },
-  planPriceAnnual: { color: '#888899', fontSize: 12, textAlign: 'right', marginTop: 2 },
-  featureText: { color: '#ccccdd', fontSize: 14, marginBottom: 8, lineHeight: 20 },
-  currentPlanBadge: {
-    backgroundColor: '#003322',
-    borderRadius: 10,
-    paddingVertical: 8,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  currentPlanText: { color: '#00ff88', fontSize: 14, fontWeight: '600' },
-  subscribeButton: {
+  upgradeButton: {
     backgroundColor: '#3333ff',
     borderRadius: 14,
-    paddingVertical: 16,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 20,
   },
-  subscribeButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
-  restoreText: {
-    color: '#aaaaff',
-    fontSize: 14,
+  upgradeButtonText: {
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  telegramHint: {
+    color: '#555566',
+    fontSize: 12,
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 10,
   },
-  disclaimer: { color: '#555566', fontSize: 12, textAlign: 'center', lineHeight: 18 },
-
-  // Добавь это:
-  subscribeButtonAnnual: {
-    backgroundColor: '#00aa55',
-    marginTop: 8,
+  premiumActive: {
+    alignItems: 'center',
+    paddingTop: 60,
+    gap: 16,
+  },
+  premiumActiveIcon: { fontSize: 64 },
+  premiumActiveTitle: {
+    color: '#ffffff',
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  premiumActiveText: {
+    color: '#888899',
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

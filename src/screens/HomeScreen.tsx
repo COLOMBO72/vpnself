@@ -100,7 +100,7 @@ export default function HomeScreen() {
 
       {/* Заголовок */}
       <View style={styles.header}>
-        <Text style={styles.title}>SELFVPN</Text>
+        <Text style={styles.title}>VELIUM VPN</Text>
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.planBadge}
