@@ -116,7 +116,6 @@ dependencies {
     implementation('com.wireguard.android:tunnel:1.0.20230706') {
         exclude group: 'com.android.support', module: 'support-compat'
     }
-    implementation 'com.google.android.gms:play-services-ads:23.0.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

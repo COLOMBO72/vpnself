@@ -14,9 +14,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVpnStore } from '../store/vpnStore';
-import BannerAdComponent from '../components/BannerAdComponent';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { AdService } from '../services/AdService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -39,14 +37,14 @@ export default function HomeScreen() {
       }
 
       // Ad for free user
-      if (plan === 'free') {
-        if (AdService.isLoaded()) {
-          await AdService.showInterstitial();
-        } else {
-          // Заглушка для эмулятора/когда реклама не загружена
-          console.log('ℹ️ Реклама не загружена — пропускаем');
-        }
-      }
+      // if (plan === 'free') {
+      //   if (AdService.isLoaded()) {
+      //     await AdService.showInterstitial();
+      //   } else {
+      //     // Заглушка для эмулятора/когда реклама не загружена
+      //     console.log('ℹ️ Реклама не загружена — пропускаем');
+      //   }
+      // }
 
       setStatus('connecting');
       try {
@@ -144,11 +142,11 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       {/* Реклама для Free пользователей */}
-      {plan === 'free' && (
+      {/* {plan === 'free' && (
         <View style={styles.adContainer}>
           <BannerAdComponent />
         </View>
-      )}
+      )} */}
     </ScrollView>
   );
 }
@@ -245,10 +243,10 @@ const styles = StyleSheet.create({
     color: '#aaaaff',
     fontSize: 24,
   },
-  adContainer: {
-    marginTop: 24,
-    alignItems: 'center',
-  },
+  // adContainer: {
+  //   marginTop: 24,
+  //   alignItems: 'center',
+  // },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
