@@ -16,4 +16,7 @@ export const authApi = {
     const response = await apiClient.post('/auth/login', { email, password });
     return response.data;
   },
+  deleteAccount: async (): Promise<void> => {
+    await apiClient.delete('/auth/delete-account');
+  },
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import VpnService from '../services/VpnService';
+import { authApi } from '../api/auth';
 import { useEffect } from 'react';
 import ServerConfigService from '../services/ServerConfigService';
 import {
@@ -76,6 +77,26 @@ export default function HomeScreen() {
     ]);
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert('Удалить аккаунт', 'Все данные будут удалены безвозвратно. Вы уверены?', [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (isConnected) await VpnService.disconnect();
+            await authApi.deleteAccount();
+            logout();
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } catch (error) {
+            Alert.alert('Ошибка', 'Не удалось удалить аккаунт');
+          }
+        },
+      },
+    ]);
+  };
+
   useEffect(() => {
     const listener = VpnService.onStatusChange((status) => {
       setStatus(status);
@@ -139,6 +160,10 @@ export default function HomeScreen() {
           {selectedServer ? `${selectedServer.flag} ${selectedServer.name}` : '🌍 Выбрать сервер'}
         </Text>
         <Text style={styles.serverArrow}>›</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+        <Text style={styles.deleteButtonText}>Удалить аккаунт</Text>
       </TouchableOpacity>
 
       {/* Реклама для Free пользователей */}
@@ -238,6 +263,16 @@ const styles = StyleSheet.create({
   serverButtonText: {
     color: '#ffffff',
     fontSize: 16,
+  },
+  deleteButton: {
+    marginTop: 40,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  deleteButtonText: {
+    color: '#555566',
+    fontSize: 13,
+    textDecorationLine: 'underline',
   },
   serverArrow: {
     color: '#aaaaff',
