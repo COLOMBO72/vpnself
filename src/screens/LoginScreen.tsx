@@ -45,7 +45,10 @@ export default function LoginScreen() {
 
       navigation.replace('Home');
     } catch (error: any) {
-      Alert.alert('Ошибка', error.response?.data?.error || 'Что-то пошло не так');
+      console.log('Ошибка авторизации:', JSON.stringify(error?.response?.data));
+      console.log('Статус:', error?.response?.status);
+      console.log('Сообщение:', error?.message);
+      Alert.alert('Ошибка', error.response?.data?.error || error.message || 'Что-то пошло не так');
     } finally {
       setLoading(false);
     }
@@ -56,7 +59,7 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Text style={styles.title}>SELFVPN</Text>
+      <Text style={styles.title}>VELIUM VPN</Text>
       <Text style={styles.subtitle}>{isRegister ? 'Создать аккаунт' : 'Войти в аккаунт'}</Text>
 
       <View style={styles.form}>
