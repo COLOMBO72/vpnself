@@ -60,7 +60,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <Text style={styles.title}>VELIUM VPN</Text>
-      <Text style={styles.subtitle}>{isRegister ? 'Создать аккаунт' : 'Войти в аккаунт'}</Text>
+      <Text style={styles.subtitle}>{isRegister ? 'Регистрация' : 'Войти в аккаунт'}</Text>
 
       <View style={styles.form}>
         <TextInput
@@ -91,9 +91,9 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setIsRegister(!isRegister)}>
-          <Text style={styles.switchText}>
-            {isRegister ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'}
+        <TouchableOpacity style={styles.registerButton} onPress={() => setIsRegister(!isRegister)}>
+          <Text style={styles.registerButtonText}>
+            {isRegister ? 'Уже есть аккаунт? Войти' : '🚀 Создать аккаунт'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -118,9 +118,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: '#aaaaff',
-    fontSize: 16,
+    fontSize: 28,
+    fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 40,
+    letterSpacing: 2,
   },
   form: {
     gap: 16,
@@ -147,10 +149,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  switchText: {
-    color: '#aaaaff',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
+  registerButton: {
+    backgroundColor: '#1e1e32',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#6655ff',
+  },
+  registerButtonText: {
+    color: '#aa88ff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
