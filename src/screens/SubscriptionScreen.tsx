@@ -15,10 +15,12 @@ export default function SubscriptionScreen() {
   const navigation = useNavigation();
   const { plan, user } = useVpnStore();
 
+  const handleOpenSite = () => {
+    Linking.openURL('https://aigenapp-backend.vercel.app/');
+  };
+
   const handleOpenTelegram = () => {
-    const botUsername = 'veliumvpn_bot'; // замени на username своего бота
-    const url = `https://t.me/${botUsername}?start=${user?.id}`;
-    Linking.openURL(url);
+    Linking.openURL('https://t.me/velium_group');
   };
 
   return (
@@ -71,8 +73,12 @@ export default function SubscriptionScreen() {
               <Text style={styles.featureGood}>✅ Поддержка 24/7</Text>
             </View>
 
-            <TouchableOpacity style={styles.upgradeButton} onPress={handleOpenTelegram}>
-              <Text style={styles.upgradeButtonText}>💎 Подробнее</Text>
+            <TouchableOpacity style={styles.upgradeButton} onPress={handleOpenSite}>
+              <Text style={styles.upgradeButtonText}>💎 Купить Premium</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.contactButton} onPress={handleOpenTelegram}>
+              <Text style={styles.contactButtonText}>💬 Связаться с нами</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -182,5 +188,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  contactButton: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#555566',
+  },
+  contactButtonText: {
+    color: '#aaaaff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
